@@ -1,22 +1,6 @@
-import { create }         from 'zustand'
-import { persist }        from 'zustand/middleware'
-import { MMKV }           from 'react-native-mmkv'
-
-// MMKV con fallback a memoria si falla la inicialización nativa
-let storage: MMKV | null = null
-try {
-  storage = new MMKV({ id: 'velunisa-cart' })
-} catch (e) {
-  console.warn('[Cart] MMKV init failed, using in-memory storage:', e)
-}
-
-const inMemory: Record<string, string> = {}
-
-const mmkvStorage = {
-  getItem:    (key: string) => storage ? (storage.getString(key) ?? null) : (inMemory[key] ?? null),
-  setItem:    (key: string, value: string) => storage ? storage.set(key, value) : (inMemory[key] = value),
-  removeItem: (key: string) => storage ? storage.delete(key) : delete inMemory[key],
-}
+import { create }                        from 'zustand'
+import { persist, createJSONStorage }    from 'zustand/middleware'
+import AsyncStorage                      from '@react-native-async-storage/async-storage'
 
 export interface MobileCartProduct {
   id:           string
@@ -90,7 +74,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name:    'velunisa-cart',
-      storage: mmkvStorage as any,
+      storage: createJSONStorage(() => AsyncStorage),
       partialize: state => ({ items: state.items }),
     }
   )
