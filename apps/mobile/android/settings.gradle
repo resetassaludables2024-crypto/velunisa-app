@@ -4,38 +4,8 @@ pluginManagement {
   }.standardOutput.asText.get().trim()
   def (_, reactNativeMinor, reactNativePatch) = version.split("-")[0].tokenize('.').collect { it.toInteger() }
 
-  // Resolve @react-native/gradle-plugin with fallback for pnpm monorepos
-  // rootDir here = apps/mobile/android/
-  def rnGradlePlugin = null
-
-  // 1) Try Node.js resolution (standard approach)
-  try {
-    def nodeOut = ["node", "--print",
-      "try{require.resolve('@react-native/gradle-plugin/package.json')}catch(e){''}"
-    ].execute(null, rootDir).text.trim()
-    if (nodeOut && nodeOut.contains("package.json") && new File(nodeOut).exists()) {
-      rnGradlePlugin = new File(nodeOut).parentFile
-    }
-  } catch (Exception ignored) {}
-
-  // 2) Fallback: relative paths for pnpm monorepos
-  if (rnGradlePlugin == null) {
-    // apps/mobile/node_modules/@react-native/gradle-plugin
-    def candidate1 = new File(rootDir, "../../node_modules/@react-native/gradle-plugin")
-    // monorepo root node_modules/@react-native/gradle-plugin (hoisted by pnpm public-hoist-pattern)
-    def candidate2 = new File(rootDir, "../../../../node_modules/@react-native/gradle-plugin")
-    if (candidate1.exists()) {
-      rnGradlePlugin = candidate1
-    } else if (candidate2.exists()) {
-      rnGradlePlugin = candidate2
-    }
-  }
-
-  if (rnGradlePlugin != null) {
-    includeBuild(rnGradlePlugin.canonicalFile)
-  }
-
-  if (reactNativeMinor == 74 && reactNativePatch <= 3) {
+  includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"].execute(null, rootDir).text.trim()).getParentFile().toString())
+  if(reactNativeMinor == 74 && reactNativePatch <= 3){
     includeBuild("react-settings-plugin")
   }
 }
@@ -46,8 +16,10 @@ def getRNMinorVersion() {
   def version = providers.exec {
     commandLine("node", "-e", "console.log(require('react-native/package.json').version);")
   }.standardOutput.asText.get().trim()
+
   def coreVersion = version.split("-")[0]
   def (major, minor, patch) = coreVersion.tokenize('.').collect { it.toInteger() }
+
   return minor
 }
 
@@ -56,9 +28,14 @@ if (getRNMinorVersion() >= 75) {
     if (System.getenv('EXPO_UNSTABLE_CORE_AUTOLINKING') == '1') {
       println('\u001B[32mUsing expo-modules-autolinking as core autolinking source\u001B[0m')
       def command = [
-        'node', '--no-warnings', '--eval',
+        'node',
+        '--no-warnings',
+        '--eval',
         'require(require.resolve(\'expo-modules-autolinking\', { paths: [require.resolve(\'expo/package.json\')] }))(process.argv.slice(1))',
-        'react-native-config', '--json', '--platform', 'android'
+        'react-native-config',
+        '--json',
+        '--platform',
+        'android'
       ].toList()
       ex.autolinkLibrariesFromCommand(command)
     } else {
@@ -86,24 +63,4 @@ if (getRNMinorVersion() < 75) {
 }
 
 include ':app'
-
-// Second includeBuild needed so com.facebook.react plugin is available in app/build.gradle
-def rnPlugin2 = null
-try {
-  def nodeOut2 = ["node", "--print",
-    "try{require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })}catch(e){''}"
-  ].execute(null, rootDir).text.trim()
-  if (nodeOut2 && nodeOut2.contains("package.json") && new File(nodeOut2).exists()) {
-    rnPlugin2 = new File(nodeOut2).parentFile
-  }
-} catch (Exception ignored) {}
-
-if (rnPlugin2 == null) {
-  def c1 = new File(rootDir, "../../node_modules/@react-native/gradle-plugin")
-  def c2 = new File(rootDir, "../../../../node_modules/@react-native/gradle-plugin")
-  rnPlugin2 = c1.exists() ? c1 : (c2.exists() ? c2 : null)
-}
-
-if (rnPlugin2 != null) {
-  includeBuild(rnPlugin2.canonicalFile)
-}
+includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile())
