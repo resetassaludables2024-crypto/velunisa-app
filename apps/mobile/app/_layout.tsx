@@ -3,6 +3,7 @@ import { Stack }        from 'expo-router'
 import { StatusBar }    from 'expo-status-bar'
 import Toast            from 'react-native-toast-message'
 import { registerForPushNotifications } from '../lib/notifications'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 export default function RootLayout() {
   useEffect(() => {
@@ -10,7 +11,7 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -31,6 +32,6 @@ export default function RootLayout() {
         <Stack.Screen name="mis-pedidos"     options={{ title: 'Mis pedidos' }} />
       </Stack>
       <Toast />
-    </>
+    </ErrorBoundary>
   )
 }
