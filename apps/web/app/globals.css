@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   VELUNISA - Global Styles
+   ============================================================ */
+
+:root {
+  --color-charcoal: #4F5353;
+  --color-cream:    #ECDBCE;
+  --color-tan:      #DBBBA4;
+  --color-dark:     #0C1B2C;
+  --color-muted:    #888888;
+  --color-red:      #E63946;
+  --transition-hover: 0.4s ease;
+  --transition-ui:    0.2s ease;
+  --container-max:    1510px;
+}
+
+/* ============================================================
+   BASE RESETS
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-opensans), system-ui, sans-serif;
+  color: var(--color-dark);
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-charcoal);
+}
+
+/* ============================================================
+   SWIPER CUSTOM STYLES
+   ============================================================ */
+.swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.6) !important;
+  opacity: 1 !important;
+  width: 10px !important;
+  height: 10px !important;
+  transition: background var(--transition-ui) !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #ffffff !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: #ffffff !important;
+  opacity: 0.8;
+  transition: opacity var(--transition-ui) !important;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  opacity: 1;
+}
+
+/* ============================================================
+   PRODUCT CARD HOVER ZOOM
+   ============================================================ */
+.product-image-wrapper {
+  overflow: hidden;
+}
+
+.product-image-wrapper img {
+  transition: transform var(--transition-hover) !important;
+}
+
+.product-image-wrapper:hover img {
+  transform: scale(1.04);
+}
+
+/* ============================================================
+   SCROLLBAR CUSTOM
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-tan);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-charcoal);
+}
+
+/* ============================================================
+   SHIMMER LOADING
+   ============================================================ */
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.container-velunisa {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-pill bg-brand-cream text-brand-charcoal font-semibold text-sm transition-all duration-300 hover:bg-brand-tan hover:shadow-md active:scale-95;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-pill border border-brand-charcoal text-brand-charcoal font-semibold text-sm transition-all duration-300 hover:bg-brand-cream active:scale-95;
+}
+
+.btn-dark {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-pill bg-brand-charcoal text-white font-semibold text-sm transition-all duration-300 hover:bg-brand-dark hover:shadow-md active:scale-95;
+}
+
+.badge-nuevo {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-brand-cream text-brand-charcoal;
+}
+
+.badge-oferta {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-brand-red text-white;
+}
+
+/* ============================================================
+   FOCUS STYLES
+   ============================================================ */
+*:focus-visible {
+  outline: 2px solid var(--color-tan);
+  outline-offset: 2px;
+}

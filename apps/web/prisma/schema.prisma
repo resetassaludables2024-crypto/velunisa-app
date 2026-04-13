@@ -1,0 +1,314 @@
+// ============================================================
+// VELUNISA - Prisma Schema
+// SQLite para desarrollo local.
+// Para producción (Supabase), cambiar provider a "postgresql"
+// y restaurar los tipos enum + Json originales.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// DOMAIN 1: USER & AUTH (NextAuth compatible)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  phone         String?
+  role          String    @default("CUSTOMER")  // "CUSTOMER" | "ADMIN"
+  expoPushToken String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  orders       Order[]
+  cart         Cart?
+  addresses    Address[]
+  chatSessions ChatSession[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// DOMAIN 2: PRODUCT CATALOG
+// ============================================================
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String
+  price        Decimal
+  comparePrice Decimal?
+  images       String   // JSON string: ["url1","url2"] — serializado automáticamente en lib/db.ts
+  stock        Int      @default(0)
+  sku          String   @unique
+  isActive     Boolean  @default(true)
+  isNew        Boolean  @default(false)
+  isFeatured   Boolean  @default(false)
+  categoryId   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  category   Category         @relation(fields: [categoryId], references: [id])
+  variants   ProductVariant[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  scheduledPosts ScheduledPost[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  name      String
+  price     Decimal
+  stock     Int     @default(0)
+  sku       String  @unique
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@map("product_variants")
+}
+
+// ============================================================
+// DOMAIN 3: CART
+// ============================================================
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String?  @unique
+  sessionId String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  variantId String?
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, productId, variantId])
+  @@map("cart_items")
+}
+
+// ============================================================
+// DOMAIN 4: ORDERS
+// ============================================================
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  label      String  @default("Casa")
+  firstName  String
+  lastName   String
+  phone      String
+  address    String
+  city       String
+  province   String
+  postalCode String?
+  isDefault  Boolean @default(false)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("addresses")
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  userId          String?
+  addressId       String?
+  guestEmail      String?
+  guestPhone      String?
+  status          String   @default("PENDING")         // "PENDING"|"CONFIRMED"|"PROCESSING"|"SHIPPED"|"DELIVERED"|"CANCELLED"
+  paymentStatus   String   @default("AWAITING_TRANSFER") // "AWAITING_TRANSFER"|"TRANSFER_SUBMITTED"|"CONFIRMED"|"FAILED"|"REFUNDED"
+  subtotal        Decimal
+  shippingCost    Decimal  @default(0)
+  total           Decimal
+  shippingAddress String   // JSON string — serializado automáticamente en lib/db.ts
+  bankTransferRef String?
+  transferProof   String?
+  confirmedAt     DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  trackingCode    String?
+  carrier         String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user    User?       @relation(fields: [userId], references: [id])
+  address Address?    @relation(fields: [addressId], references: [id])
+  items   OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  variantId String?
+  name      String
+  price     Decimal
+  quantity  Int
+  image     String
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("order_items")
+}
+
+// ============================================================
+// DOMAIN 5: AI CHAT
+// ============================================================
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String?
+  sessionId String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User?         @relation(fields: [userId], references: [id])
+  messages ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  metadata  String?  // JSON string opcional — serializado automáticamente en lib/db.ts
+  createdAt DateTime @default(now())
+
+  chatSession ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+// ============================================================
+// DOMAIN 6: SOCIAL MEDIA SCHEDULER
+// ============================================================
+
+model ScheduledPost {
+  id           String   @id @default(cuid())
+  platform     String   // "INSTAGRAM" | "TIKTOK" | "BOTH"
+  caption      String
+  mediaUrls    String   // JSON string: ["url1","url2"] — serializado automáticamente
+  scheduledFor DateTime
+  status       String   @default("SCHEDULED") // "SCHEDULED" | "PUBLISHED" | "FAILED"
+  productId    String?
+  publishedAt  DateTime?
+  errorLog     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@map("scheduled_posts")
+}
+
+// ============================================================
+// DOMAIN 7: WEBHOOKS (ManyChat + WhatsApp)
+// ============================================================
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  source    String
+  eventType String
+  payload   String   // JSON string — serializado automáticamente en lib/db.ts
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("webhook_events")
+}
