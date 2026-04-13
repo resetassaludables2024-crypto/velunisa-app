@@ -4,10 +4,48 @@ pluginManagement {
   }.standardOutput.asText.get().trim()
   def (_, reactNativeMinor, reactNativePatch) = version.split("-")[0].tokenize('.').collect { it.toInteger() }
 
-  includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"].execute(null, rootDir).text.trim()).getParentFile().toString())
+  // Resolve @react-native/gradle-plugin with fallback for pnpm monorepos
+  def rnGradlePlugin = findRNGradlePlugin(rootDir)
+  if (rnGradlePlugin) {
+    includeBuild(rnGradlePlugin)
+  }
+
   if(reactNativeMinor == 74 && reactNativePatch <= 3){
     includeBuild("react-settings-plugin")
   }
+}
+
+/**
+ * Find @react-native/gradle-plugin directory.
+ * Tries Node.js resolution first, then falls back to relative paths
+ * for pnpm monorepo environments (EAS Build).
+ */
+def findRNGradlePlugin(File rootDir) {
+  // Try Node.js resolution (works when package is directly accessible)
+  try {
+    def nodeOutput = ["node", "--print",
+      "try{require.resolve('@react-native/gradle-plugin/package.json')}catch(e){''}"
+    ].execute(null, rootDir).text.trim()
+    if (nodeOutput && nodeOutput.endsWith("package.json") && new File(nodeOutput).exists()) {
+      return new File(nodeOutput).parentFile
+    }
+  } catch (Exception ignored) {}
+
+  // Fallback: search relative paths for pnpm monorepo setups
+  // rootDir = apps/mobile/android/
+  def candidates = [
+    new File(rootDir, "../../node_modules/@react-native/gradle-plugin"),      // apps/mobile/node_modules
+    new File(rootDir, "../../../../node_modules/@react-native/gradle-plugin"), // monorepo root node_modules
+  ]
+  for (candidate in candidates) {
+    if (candidate.exists() && new File(candidate, "package.json").exists()) {
+      println("[settings.gradle] Found @react-native/gradle-plugin at: ${candidate.canonicalPath}")
+      return candidate.canonicalFile
+    }
+  }
+
+  println("[settings.gradle] WARNING: @react-native/gradle-plugin not found, using react-settings-plugin stub")
+  return null
 }
 
 plugins { id("com.facebook.react.settings") }
@@ -63,4 +101,9 @@ if (getRNMinorVersion() < 75) {
 }
 
 include ':app'
-includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile())
+
+// Second includeBuild for @react-native/gradle-plugin (build tasks)
+def rnGradlePluginForBuild = findRNGradlePlugin(rootDir)
+if (rnGradlePluginForBuild) {
+  includeBuild(rnGradlePluginForBuild)
+}
