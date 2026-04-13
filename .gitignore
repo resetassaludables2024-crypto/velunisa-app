@@ -33,4 +33,4 @@ yarn-error.log*
 # Expo
 .expo/
 ios/
-# android/ es committed para bare workflow en EAS Build
+android/
