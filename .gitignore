@@ -23,6 +23,7 @@ prisma/migrations/
 .DS_Store
 *.pem
 .turbo/
+.claude/
 
 # Debug
 npm-debug.log*
