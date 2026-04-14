@@ -1,5 +1,5 @@
 import { Tabs }    from 'expo-router'
-import { Home, ShoppingBag, ShoppingCart, User } from 'lucide-react-native'
+import { Home, ShoppingBag, ShoppingCart, User, MessageCircle } from 'lucide-react-native'
 import { useCartStore } from '../../store/cart.store'
 
 export default function TabsLayout() {
@@ -48,6 +48,15 @@ export default function TabsLayout() {
           title:      'Carrito',
           tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="luna"
+        options={{
+          title:      'Luna IA',
+          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
+          headerTitle: 'Luna 🌸',
+          headerStyle: { backgroundColor: '#ECDBCE' },
         }}
       />
       <Tabs.Screen
