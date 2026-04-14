@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   StyleSheet, ActivityIndicator, Alert,
 } from 'react-native'
 import { Stack, router } from 'expo-router'
 import { Package, Search } from 'lucide-react-native'
-import { MMKV } from 'react-native-mmkv'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ordersApi } from '../lib/api'
 
 const BRAND = {
@@ -16,8 +16,6 @@ const BRAND = {
   muted:    '#888888',
   white:    '#FFFFFF',
 }
-
-const storage = new MMKV({ id: 'velunisa-auth' })
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING:    'Pendiente',
@@ -43,15 +41,17 @@ interface Order {
   createdAt: string; items: { id: string }[]
 }
 
-function getUser() {
-  try { return JSON.parse(storage.getString('user') ?? 'null') } catch { return null }
-}
-
 export default function MisPedidosScreen() {
-  const user              = getUser()
+  const [user,    setUser]    = useState<any>(null)
   const [orders,  setOrders]  = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
   const [query,   setQuery]   = useState('')
+
+  useEffect(() => {
+    AsyncStorage.getItem('velunisa-user')
+      .then(v => { if (v) setUser(JSON.parse(v)) })
+      .catch(() => {})
+  }, [])
 
   async function searchOrder() {
     const q = query.trim().toUpperCase()

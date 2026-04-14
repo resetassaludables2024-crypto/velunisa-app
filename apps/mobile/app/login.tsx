@@ -7,7 +7,7 @@ import {
 import { router, Stack, Link } from 'expo-router'
 import { Eye, EyeOff } from 'lucide-react-native'
 import { api } from '../lib/api'
-import { MMKV } from 'react-native-mmkv'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import Toast from 'react-native-toast-message'
 import { registerForPushNotifications, savePushTokenToServer } from '../lib/notifications'
 
@@ -21,8 +21,6 @@ const BRAND = {
   white:    '#FFFFFF',
   red:      '#EF4444',
 }
-
-const storage = new MMKV({ id: 'velunisa-auth' })
 
 export default function LoginScreen() {
   const [email,    setEmail]    = useState('')
@@ -42,8 +40,8 @@ export default function LoginScreen() {
       const res = await api.post('/api/mobile/auth', { email: email.trim().toLowerCase(), password })
       const { user, token } = res.data
       // Store session locally
-      storage.set('user',  JSON.stringify(user))
-      storage.set('token', token)
+      await AsyncStorage.setItem('velunisa-user',  JSON.stringify(user))
+      await AsyncStorage.setItem('velunisa-token', token)
       // Save push token to server (best-effort)
       registerForPushNotifications()
         .then(pushToken => { if (pushToken) savePushTokenToServer(pushToken, user.id) })
