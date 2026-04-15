@@ -35,8 +35,8 @@ export const authApi = {
   register: (data: object) => api.post('/api/auth/register', data).then(r => r.data),
 }
 
-// Chat
+// Chat (mobile endpoint — returns { reply } JSON, not SSE stream)
 export const chatApi = {
   sendMessage: (message: string, sessionId: string) =>
-    api.post('/api/chat', { message, sessionId }),
+    api.post('/api/mobile/chat', { message, sessionId }),
 }
