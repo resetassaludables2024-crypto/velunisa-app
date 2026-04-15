@@ -13,10 +13,4 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ]
 
-// Asegurar que react-native se resuelve desde el proyecto mobile
-// (necesario para que el settings.gradle de EAS Build lo encuentre)
-config.resolver.extraNodeModules = {
-  'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
-}
-
 module.exports = config

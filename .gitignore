@@ -18,6 +18,8 @@ out/
 
 # Prisma
 prisma/migrations/
+*.db
+*.db-journal
 
 # Misc
 .DS_Store
