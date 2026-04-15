@@ -26,6 +26,8 @@ export const ordersApi = {
   create: (data: object)           => api.post('/api/orders', data).then(r => r.data.data),
   getByNumber: (orderNumber: string) =>
     api.get(`/api/orders/${orderNumber}`).then(r => r.data.data),
+  getByUser: (userId: string) =>
+    api.get('/api/mobile/orders', { params: { userId } }).then(r => r.data.data),
   submitTransferProof: (orderNumber: string, data: object) =>
     api.post(`/api/orders/${orderNumber}/transfer-proof`, data).then(r => r.data),
 }

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, RefreshControl,
 } from 'react-native'
-import { Stack, router } from 'expo-router'
-import { Package, Search } from 'lucide-react-native'
+import { Stack, router, useFocusEffect } from 'expo-router'
+import { Package, Search, ChevronRight } from 'lucide-react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ordersApi } from '../lib/api'
 
@@ -34,24 +34,101 @@ const STATUS_COLOR: Record<string, string> = {
   CANCELLED:  '#EF4444',
 }
 
-function formatPrice(n: number) { return `$${n.toFixed(2)}` }
+function formatPrice(n: number) { return `$${parseFloat(String(n)).toFixed(2)}` }
 
 interface Order {
-  id: string; orderNumber: string; status: string; total: string
-  createdAt: string; items: { id: string }[]
+  id: string; orderNumber: string; status: string
+  paymentStatus: string; total: string; createdAt: string
+  items: { id: string; name: string; quantity: number }[]
+}
+
+const STEPS       = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED']
+const STEP_LABELS = ['Recibido', 'Preparando', 'En camino', 'Entregado']
+
+function OrderProgress({ status }: { status: string }) {
+  const idx = STEPS.indexOf(status)
+  return (
+    <View style={progressStyles.container}>
+      {STEPS.map((s, i) => (
+        <View key={s} style={progressStyles.step}>
+          <View style={[progressStyles.dot, i <= idx && progressStyles.dotActive]}>
+            {i <= idx && <View style={progressStyles.dotInner} />}
+          </View>
+          <Text style={[progressStyles.label, i <= idx && progressStyles.labelActive]}>
+            {STEP_LABELS[i]}
+          </Text>
+          {i < STEPS.length - 1 && (
+            <View style={[progressStyles.line, i < idx && progressStyles.lineActive]} />
+          )}
+        </View>
+      ))}
+    </View>
+  )
+}
+
+function OrderCard({ order }: { order: Order }) {
+  return (
+    <View style={styles.orderCard}>
+      <View style={styles.orderTop}>
+        <View>
+          <Text style={styles.orderNumber}>{order.orderNumber}</Text>
+          <Text style={styles.orderDate}>
+            {new Date(order.createdAt).toLocaleDateString('es-EC', {
+              day: '2-digit', month: 'long', year: 'numeric',
+            })}
+          </Text>
+        </View>
+        <View style={styles.orderRight}>
+          <Text style={[styles.statusBadge, { color: STATUS_COLOR[order.status] ?? BRAND.muted }]}>
+            ● {STATUS_LABEL[order.status] ?? order.status}
+          </Text>
+          <Text style={styles.orderTotal}>{formatPrice(parseFloat(order.total))}</Text>
+        </View>
+      </View>
+      <Text style={styles.orderItemCount}>
+        {order.items?.length ?? 0} producto{(order.items?.length ?? 0) !== 1 ? 's' : ''}
+        {order.items?.length > 0 ? ` — ${order.items[0].name}${order.items.length > 1 ? '...' : ''}` : ''}
+      </Text>
+      <OrderProgress status={order.status} />
+    </View>
+  )
 }
 
 export default function MisPedidosScreen() {
-  const [user,    setUser]    = useState<any>(null)
-  const [orders,  setOrders]  = useState<Order[]>([])
-  const [loading, setLoading] = useState(false)
-  const [query,   setQuery]   = useState('')
+  const [user,       setUser]       = useState<any>(null)
+  const [orders,     setOrders]     = useState<Order[]>([])
+  const [loading,    setLoading]    = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [query,      setQuery]      = useState('')
+  const [searched,   setSearched]   = useState(false)
 
-  useEffect(() => {
-    AsyncStorage.getItem('velunisa-user')
-      .then(v => { if (v) setUser(JSON.parse(v)) })
-      .catch(() => {})
-  }, [])
+  // Load user from storage and their orders each time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem('velunisa-user')
+        .then(v => {
+          const u = v ? JSON.parse(v) : null
+          setUser(u)
+          if (u?.id) loadUserOrders(u.id)
+        })
+        .catch(() => setUser(null))
+    }, [])
+  )
+
+  async function loadUserOrders(userId: string, refresh = false) {
+    if (refresh) setRefreshing(true)
+    else setLoading(true)
+    try {
+      const data = await ordersApi.getByUser(userId)
+      setOrders(data ?? [])
+      setSearched(false)
+    } catch {
+      // silent — user may be offline
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
 
   async function searchOrder() {
     const q = query.trim().toUpperCase()
@@ -61,6 +138,7 @@ export default function MisPedidosScreen() {
       const order = await ordersApi.getByNumber(q)
       if (order) {
         setOrders([order])
+        setSearched(true)
       } else {
         Alert.alert('No encontrado', `No se encontró el pedido ${q}`)
         setOrders([])
@@ -71,6 +149,12 @@ export default function MisPedidosScreen() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function clearSearch() {
+    setQuery('')
+    setSearched(false)
+    if (user?.id) loadUserOrders(user.id)
   }
 
   if (!user) {
@@ -108,54 +192,59 @@ export default function MisPedidosScreen() {
               returnKeyType="search"
               onSubmitEditing={searchOrder}
             />
-            <TouchableOpacity style={styles.searchBtn} onPress={searchOrder} disabled={loading}>
+            <TouchableOpacity
+              style={styles.searchBtn}
+              onPress={searched ? clearSearch : searchOrder}
+              disabled={loading}
+            >
               {loading
                 ? <ActivityIndicator size="small" color={BRAND.white} />
                 : <Search size={20} color={BRAND.white} />
               }
             </TouchableOpacity>
           </View>
+          {searched && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearRow}>
+              <Text style={styles.clearText}>← Volver a mis pedidos</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {orders.length === 0 ? (
+        {loading && !refreshing ? (
+          <ActivityIndicator color={BRAND.charcoal} style={{ marginTop: 40 }} />
+        ) : orders.length === 0 ? (
           <View style={styles.center}>
             <Text style={{ fontSize: 48, marginBottom: 12 }}>📦</Text>
-            <Text style={styles.emptyTitle}>Hola, {user.name?.split(' ')[0]} 👋</Text>
-            <Text style={styles.emptySub}>
-              Ingresa tu número de pedido (ej: VEL-2024-00001) para ver el estado.
+            <Text style={styles.emptyTitle}>
+              {searched ? 'Pedido no encontrado' : `Hola, ${user.name?.split(' ')[0]} 👋`}
             </Text>
+            <Text style={styles.emptySub}>
+              {searched
+                ? 'Verifica el número e inténtalo de nuevo'
+                : 'Aún no tienes pedidos. ¡Explora nuestra tienda!'}
+            </Text>
+            {!searched && (
+              <TouchableOpacity style={styles.shopBtn} onPress={() => router.push('/tienda')}>
+                <Text style={styles.shopBtnText}>Ver tienda →</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <FlatList
             data={orders}
             keyExtractor={o => o.id}
             contentContainerStyle={styles.list}
-            renderItem={({ item: order }) => (
-              <View style={styles.orderCard}>
-                <View style={styles.orderTop}>
-                  <View>
-                    <Text style={styles.orderNumber}>{order.orderNumber}</Text>
-                    <Text style={styles.orderDate}>
-                      {new Date(order.createdAt).toLocaleDateString('es-EC', {
-                        day: '2-digit', month: 'long', year: 'numeric',
-                      })}
-                    </Text>
-                  </View>
-                  <View style={styles.orderRight}>
-                    <Text style={[styles.statusBadge, { color: STATUS_COLOR[order.status] ?? BRAND.muted }]}>
-                      ● {STATUS_LABEL[order.status] ?? order.status}
-                    </Text>
-                    <Text style={styles.orderTotal}>{formatPrice(parseFloat(order.total))}</Text>
-                  </View>
-                </View>
-                <Text style={styles.orderItemCount}>
-                  {order.items?.length ?? 0} producto{(order.items?.length ?? 0) !== 1 ? 's' : ''}
-                </Text>
-
-                {/* Progress bar */}
-                <OrderProgress status={order.status} />
-              </View>
-            )}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              user?.id && !searched ? (
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={() => loadUserOrders(user.id, true)}
+                  tintColor={BRAND.charcoal}
+                />
+              ) : undefined
+            }
+            renderItem={({ item }) => <OrderCard order={item} />}
           />
         )}
       </View>
@@ -163,40 +252,16 @@ export default function MisPedidosScreen() {
   )
 }
 
-const STEPS = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED']
-const STEP_LABELS = ['Recibido', 'Preparando', 'En camino', 'Entregado']
-
-function OrderProgress({ status }: { status: string }) {
-  const idx = STEPS.indexOf(status)
-  return (
-    <View style={progressStyles.container}>
-      {STEPS.map((s, i) => (
-        <View key={s} style={progressStyles.step}>
-          <View style={[progressStyles.dot, i <= idx && progressStyles.dotActive]}>
-            {i <= idx && <View style={progressStyles.dotInner} />}
-          </View>
-          <Text style={[progressStyles.label, i <= idx && progressStyles.labelActive]}>
-            {STEP_LABELS[i]}
-          </Text>
-          {i < STEPS.length - 1 && (
-            <View style={[progressStyles.line, i < idx && progressStyles.lineActive]} />
-          )}
-        </View>
-      ))}
-    </View>
-  )
-}
-
 const progressStyles = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 16, gap: 0 },
-  step:      { flex: 1, alignItems: 'center', position: 'relative' },
-  dot:       { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: BRAND.tan, backgroundColor: BRAND.white, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  dotActive: { borderColor: BRAND.charcoal, backgroundColor: BRAND.charcoal },
-  dotInner:  { width: 6, height: 6, borderRadius: 3, backgroundColor: BRAND.white },
-  label:     { fontSize: 10, color: BRAND.muted, marginTop: 4, textAlign: 'center' },
+  container:   { flexDirection: 'row', alignItems: 'flex-start', marginTop: 16 },
+  step:        { flex: 1, alignItems: 'center', position: 'relative' },
+  dot:         { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: BRAND.tan, backgroundColor: BRAND.white, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  dotActive:   { borderColor: BRAND.charcoal, backgroundColor: BRAND.charcoal },
+  dotInner:    { width: 6, height: 6, borderRadius: 3, backgroundColor: BRAND.white },
+  label:       { fontSize: 10, color: BRAND.muted, marginTop: 4, textAlign: 'center' },
   labelActive: { color: BRAND.charcoal, fontWeight: '600' },
-  line:      { position: 'absolute', top: 7, left: '50%', right: '-50%', height: 2, backgroundColor: BRAND.tan + '50', zIndex: 0 },
-  lineActive:{ backgroundColor: BRAND.charcoal },
+  line:        { position: 'absolute', top: 7, left: '50%', right: '-50%', height: 2, backgroundColor: BRAND.tan + '50', zIndex: 0 },
+  lineActive:  { backgroundColor: BRAND.charcoal },
 })
 
 const styles = StyleSheet.create({
@@ -206,15 +271,19 @@ const styles = StyleSheet.create({
   emptySub:       { fontSize: 13, color: BRAND.muted, textAlign: 'center', lineHeight: 20 },
   loginBtn:       { backgroundColor: BRAND.charcoal, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
   loginBtnText:   { color: BRAND.white, fontWeight: '700', fontSize: 15 },
+  shopBtn:        { backgroundColor: BRAND.charcoal, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, marginTop: 8 },
+  shopBtnText:    { color: BRAND.white, fontWeight: '700', fontSize: 14 },
   searchSection:  { backgroundColor: BRAND.white, margin: 16, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: BRAND.tan + '30' },
   searchLabel:    { fontSize: 13, fontWeight: '600', color: BRAND.charcoal, marginBottom: 10 },
   searchRow:      { flexDirection: 'row', gap: 8 },
-  searchInput:    { flex: 1, borderWidth: 1.5, borderColor: BRAND.tan, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: BRAND.charcoal, fontVariant: ['tabular-nums'] },
+  searchInput:    { flex: 1, borderWidth: 1.5, borderColor: BRAND.tan, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: BRAND.charcoal },
   searchBtn:      { backgroundColor: BRAND.charcoal, borderRadius: 12, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', minWidth: 52 },
-  list:           { padding: 16, gap: 14 },
+  clearRow:       { marginTop: 10 },
+  clearText:      { fontSize: 13, color: BRAND.charcoal, fontWeight: '600' },
+  list:           { padding: 16, gap: 14, paddingBottom: 32 },
   orderCard:      { backgroundColor: BRAND.white, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: BRAND.tan + '30' },
   orderTop:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  orderNumber:    { fontSize: 15, fontWeight: '700', color: BRAND.charcoal, fontVariant: ['tabular-nums'] },
+  orderNumber:    { fontSize: 15, fontWeight: '700', color: BRAND.charcoal },
   orderDate:      { fontSize: 11, color: BRAND.muted, marginTop: 3 },
   orderRight:     { alignItems: 'flex-end' },
   statusBadge:    { fontSize: 12, fontWeight: '700' },
