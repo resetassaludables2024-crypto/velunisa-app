@@ -13,4 +13,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ]
 
+// Fix: web-streams-polyfill usa exports condicionales no soportados por Metro
+config.resolver.unstable_enablePackageExports = false
+
 module.exports = config
