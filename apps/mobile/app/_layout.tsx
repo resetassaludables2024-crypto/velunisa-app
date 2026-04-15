@@ -2,17 +2,11 @@ import { useEffect }   from 'react'
 import { Stack }        from 'expo-router'
 import { StatusBar }    from 'expo-status-bar'
 import Toast            from 'react-native-toast-message'
-import * as SplashScreen from 'expo-splash-screen'
 import { registerForPushNotifications } from '../lib/notifications'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 
-// Mantener el splash visible hasta que el layout esté listo
-SplashScreen.preventAutoHideAsync()
-
 export default function RootLayout() {
   useEffect(() => {
-    // Ocultar splash screen una vez montado el layout raíz
-    SplashScreen.hideAsync()
     registerForPushNotifications().catch(console.error)
   }, [])
 
