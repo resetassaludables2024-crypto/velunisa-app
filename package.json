@@ -26,6 +26,10 @@
     "@prisma/client": "^5.14.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "esbuild", "unrs-resolver"]
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "esbuild", "unrs-resolver"],
+    "overrides": {
+      "@react-native/gradle-plugin": "0.76.7",
+      "@react-native/codegen": "0.76.7"
+    }
   }
 }

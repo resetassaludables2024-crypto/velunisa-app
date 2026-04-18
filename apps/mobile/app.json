@@ -31,8 +31,7 @@
       },
       "package": "com.velunisa.app",
       "versionCode": 1,
-      "usesCleartextTraffic": true,
-      "permissions": [
+"permissions": [
         "android.permission.INTERNET",
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",

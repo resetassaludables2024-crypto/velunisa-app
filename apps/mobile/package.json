@@ -17,9 +17,17 @@
     "install": {
       "exclude": [
         "react-native",
+        "react",
         "expo-notifications",
+        "expo-constants",
+        "expo-clipboard",
+        "expo-image",
+        "expo-router",
+        "expo-status-bar",
         "react-native-screens",
         "react-native-safe-area-context",
+        "@react-native-async-storage/async-storage",
+        "@shopify/flash-list",
         "typescript",
         "@react-navigation/bottom-tabs",
         "@types/react"
@@ -54,7 +62,6 @@
     "@react-native/codegen": "0.76.7",
     "@react-native/gradle-plugin": "0.76.7",
     "@types/react": "~18.2.79",
-    "@types/react-native": "^0.73.0",
     "typescript": "^5.3.3"
   }
 }

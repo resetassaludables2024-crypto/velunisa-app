@@ -6,8 +6,10 @@ const monorepoRoot = path.resolve(projectRoot, '../..')
 
 const config = getDefaultConfig(projectRoot)
 
-// Monorepo: exponer node_modules de la raíz y del proyecto
-config.watchFolders = [monorepoRoot]
+// Monorepo: agregar root al watchFolders (sin sobreescribir los defaults de Expo)
+config.watchFolders = [...(config.watchFolders || []), monorepoRoot]
+
+// Monorepo: resolver módulos desde el root y desde mobile
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(monorepoRoot, 'node_modules'),
