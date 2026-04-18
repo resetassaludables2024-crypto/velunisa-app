@@ -38,7 +38,6 @@
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.15.9",
     "@shopify/flash-list": "1.7.2",
-    "@velunisa/types": "workspace:*",
     "axios": "^1.7.2",
     "expo": "~54.0.0",
     "expo-clipboard": "~7.0.0",
