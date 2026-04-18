@@ -8,6 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r23c",
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
       }
@@ -15,6 +16,7 @@
     "preview": {
       "distribution": "internal",
       "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r23c",
         "buildType": "apk"
       },
       "env": {
@@ -33,6 +35,7 @@
     "production": {
       "autoIncrement": true,
       "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r23c",
         "buildType": "app-bundle"
       },
       "env": {
@@ -43,6 +46,17 @@
       "extends": "production",
       "android": {
         "buildType": "apk"
+      }
+    },
+    "velunisa-go": {
+      "distribution": "internal",
+      "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r23c",
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://velunisa.com",
+        "EXPO_PUBLIC_APP_VARIANT": "go"
       }
     }
   },
