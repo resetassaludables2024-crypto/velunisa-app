@@ -56,7 +56,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@expo/cli": "*",
     "@react-native-community/cli-platform-android": "*",
     "@react-native/codegen": "0.76.7",
     "@react-native/gradle-plugin": "0.76.7",
