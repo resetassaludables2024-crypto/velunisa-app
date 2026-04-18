@@ -70,7 +70,8 @@
           "color": "#4F5353",
           "sounds": []
         }
-      ]
+      ],
+      "./plugins/withGradleWrapper"
     ],
     "extra": {
       "eas": {

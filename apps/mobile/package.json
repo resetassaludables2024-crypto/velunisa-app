@@ -13,6 +13,19 @@
     "submit:ios": "eas submit --platform ios",
     "update": "eas update"
   },
+  "expo": {
+    "install": {
+      "exclude": [
+        "react-native",
+        "expo-notifications",
+        "react-native-screens",
+        "react-native-safe-area-context",
+        "typescript",
+        "@react-navigation/bottom-tabs",
+        "@types/react"
+      ]
+    }
+  },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.15.9",
