@@ -35,7 +35,21 @@ module.exports = function withGradleWrapper(config) {
       )
 
       fs.writeFileSync(wrapperPath, content)
-      console.log(`[withGradleWrapper] ✓ Gradle fijado a ${GRADLE_VERSION}`)
+
+      // Gradle 8.6 tiene un bug en expo-modules-autolinking: desactivar configuration cache
+      const graPropsPath = path.join(
+        config.modRequest.platformProjectRoot,
+        'gradle.properties'
+      )
+      if (fs.existsSync(graPropsPath)) {
+        let props = fs.readFileSync(graPropsPath, 'utf-8')
+        if (!props.includes('org.gradle.configuration-cache=false')) {
+          props += '\norg.gradle.configuration-cache=false\n'
+          fs.writeFileSync(graPropsPath, props, 'utf-8')
+        }
+      }
+
+      console.log(`[withGradleWrapper] ✓ Gradle ${GRADLE_VERSION} + configuration-cache disabled`)
 
       return config
     },
