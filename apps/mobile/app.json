@@ -70,7 +70,8 @@
           "sounds": []
         }
       ],
-      "./plugins/withGradleWrapper"
+      "./plugins/withGradleWrapper",
+      "./plugins/withExpoRouterCtx"
     ],
     "extra": {
       "eas": {
