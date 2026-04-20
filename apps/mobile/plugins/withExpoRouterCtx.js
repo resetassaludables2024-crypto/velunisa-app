@@ -30,14 +30,18 @@ module.exports = function withExpoRouterCtx(config) {
 
       let content = fs.readFileSync(ctxPath, 'utf-8')
 
-      // Reemplazar process.env.EXPO_ROUTER_APP_ROOT con la cadena literal "./app"
+      // Reemplazar process.env variables con valores estáticos para require.context()
       content = content.replace(
         /process\.env\.EXPO_ROUTER_APP_ROOT/g,
         '"./app"'
       )
+      content = content.replace(
+        /process\.env\.EXPO_ROUTER_IMPORT_MODE/g,
+        '"sync"'
+      )
 
       fs.writeFileSync(ctxPath, content, 'utf-8')
-      console.log('[withExpoRouterCtx] ✓ Reemplazado EXPO_ROUTER_APP_ROOT con "./app"')
+      console.log('[withExpoRouterCtx] ✓ Hardcodeadas env vars de expo-router')
 
       return config
     },
