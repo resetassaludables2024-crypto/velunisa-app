@@ -54,7 +54,9 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://velunisa.com",
-        "EXPO_PUBLIC_APP_VARIANT": "go"
+        "EXPO_PUBLIC_APP_VARIANT": "go",
+        "EXPO_ROUTER_APP_ROOT": "./app",
+        "EXPO_ROUTER_IMPORT_MODE": "sync"
       }
     }
   },
