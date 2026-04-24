@@ -1,213 +1,251 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Download, Smartphone, Globe, Apple, Package } from 'lucide-react'
+import { Download, Smartphone, Globe, Package, CheckCircle, AlertCircle } from 'lucide-react'
+
+const APK_URL = 'https://github.com/resetassaludables2024-crypto/velunisa-app/releases/latest/download/velunisa.apk'
 
 export default function DescargarPage() {
-  const [apkUrl, setApkUrl] = useState<string | null>(null)
+  const [pwaPrompted, setPwaPrompted] = useState(false)
 
-  useEffect(() => {
-    // Obtener URL del APK desde variable de entorno
-    const url = process.env.NEXT_PUBLIC_APK_URL
-    if (url) {
-      setApkUrl(url)
+  function handleInstallPwa() {
+    if (typeof window !== 'undefined' && 'BeforeInstallPromptEvent' in window) {
+      window.dispatchEvent(new Event('beforeinstallprompt'))
     }
-  }, [])
+    setPwaPrompted(true)
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-b from-amber-50 to-white py-12 md:py-20">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Velunisa Go
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Descarga nuestra app y accede a todas tus compras desde tu celular
+    <div className="min-h-screen bg-brand-bg">
+
+      {/* ── Hero ───────────────────────────────────────────────────────── */}
+      <section className="bg-brand-charcoal text-brand-cream py-16 md:py-24">
+        <div className="container-velunisa text-center">
+          <p className="text-brand-tan text-sm tracking-widest uppercase mb-4">
+            App oficial
           </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
+          <h1 className="font-serif text-4xl md:text-5xl mb-4">
+            Velunisa en tu celular
+          </h1>
+          <p className="text-brand-tan text-lg max-w-xl mx-auto mb-10">
+            Accede al catálogo, gestiona tus pedidos y chatea con Luna
+            desde tu teléfono, cuando quieras.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => {
-                if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
-                  window.dispatchEvent(new Event('beforeinstallprompt'))
-                }
-              }}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              onClick={handleInstallPwa}
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-pill
+                         bg-brand-tan text-brand-charcoal font-semibold hover:bg-brand-cream
+                         transition-colors"
             >
               <Globe className="w-5 h-5" />
-              Instalar PWA
+              Instalar PWA — iPhone &amp; Android
             </button>
-            {apkUrl && (
-              <a
-                href={apkUrl}
-                download
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-              >
-                <Download className="w-5 h-5" />
-                Descargar APK
-              </a>
-            )}
+            <a
+              href={APK_URL}
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-pill
+                         border-2 border-brand-tan text-brand-tan font-semibold
+                         hover:bg-brand-tan hover:text-brand-charcoal transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              Descargar APK — Android
+            </a>
           </div>
+
+          {pwaPrompted && (
+            <p className="mt-6 text-brand-tan text-sm">
+              Sigue las instrucciones en tu navegador para agregar la app.
+            </p>
+          )}
         </div>
-      </div>
+      </section>
 
-      {/* Options */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      {/* ── Tarjetas de instalación ────────────────────────────────────── */}
+      <section className="container-velunisa py-16">
         <div className="grid md:grid-cols-2 gap-8">
-          {/* PWA Option */}
-          <div className="border border-gray-200 rounded-xl p-8 hover:shadow-lg transition">
-            <div className="flex items-center gap-3 mb-4">
-              <Globe className="w-8 h-8 text-blue-600" />
-              <h2 className="text-2xl font-bold">PWA (Recomendado)</h2>
+
+          {/* PWA */}
+          <div className="bg-white rounded-2xl border border-brand-tan/20 p-8 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full bg-brand-cream flex items-center justify-center">
+                <Globe className="w-6 h-6 text-brand-charcoal" />
+              </div>
+              <div>
+                <h2 className="font-serif text-xl text-brand-charcoal">PWA</h2>
+                <span className="text-xs text-brand-muted">iOS &amp; Android — Recomendado</span>
+              </div>
             </div>
-            <p className="text-gray-600 mb-6">
-              Instala directamente desde tu navegador. Funciona offline y se actualiza automáticamente.
+            <p className="text-brand-muted text-sm mb-6">
+              Sin descargar nada extra. Se instala desde el navegador y funciona
+              offline con actualizaciones automáticas.
             </p>
 
-            <h3 className="font-bold text-lg mb-4">Android:</h3>
-            <ol className="space-y-3 mb-6 text-sm">
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">1.</span>
-                <span>Abre this.site en Chrome</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">2.</span>
-                <span>Haz clic en el menú (⋮) arriba a la derecha</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">3.</span>
-                <span>Selecciona "Instalar app"</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">4.</span>
-                <span>Confirma y ¡listo!</span>
-              </li>
-            </ol>
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold text-brand-charcoal mb-3 flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" /> Android (Chrome)
+                </h3>
+                <ol className="space-y-2 text-sm text-brand-muted">
+                  {[
+                    'Abre velunisa.com en Chrome',
+                    'Toca el menú ⋮ arriba a la derecha',
+                    'Selecciona "Instalar app"',
+                    'Confirma y ¡listo!',
+                  ].map((step, i) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="font-bold text-brand-charcoal min-w-[1.2rem]">{i + 1}.</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
 
-            <h3 className="font-bold text-lg mb-4">iPhone/iPad:</h3>
-            <ol className="space-y-3 text-sm">
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">1.</span>
-                <span>Abre en Safari</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">2.</span>
-                <span>Haz clic en el botón Compartir</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">3.</span>
-                <span>Selecciona "Agregar a pantalla de inicio"</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-blue-600 min-w-fit">4.</span>
-                <span>Elige un nombre y confirma</span>
-              </li>
-            </ol>
+              <div>
+                <h3 className="font-semibold text-brand-charcoal mb-3 flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" /> iPhone / iPad (Safari)
+                </h3>
+                <ol className="space-y-2 text-sm text-brand-muted">
+                  {[
+                    'Abre velunisa.com en Safari',
+                    'Toca el botón Compartir ↑',
+                    'Selecciona "Agregar a inicio"',
+                    'Confirma el nombre y listo',
+                  ].map((step, i) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="font-bold text-brand-charcoal min-w-[1.2rem]">{i + 1}.</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+
+            <button
+              onClick={handleInstallPwa}
+              className="mt-8 w-full py-3 rounded-pill bg-brand-charcoal text-brand-cream
+                         font-semibold hover:bg-brand-charcoal/90 transition-colors"
+            >
+              Instalar PWA ahora
+            </button>
           </div>
 
-          {/* APK Option */}
-          <div className="border border-gray-200 rounded-xl p-8 hover:shadow-lg transition">
-            <div className="flex items-center gap-3 mb-4">
-              <Package className="w-8 h-8 text-green-600" />
-              <h2 className="text-2xl font-bold">APK (Android)</h2>
+          {/* APK */}
+          <div className="bg-white rounded-2xl border border-brand-tan/20 p-8 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full bg-brand-cream flex items-center justify-center">
+                <Package className="w-6 h-6 text-brand-charcoal" />
+              </div>
+              <div>
+                <h2 className="font-serif text-xl text-brand-charcoal">APK</h2>
+                <span className="text-xs text-brand-muted">Solo Android</span>
+              </div>
             </div>
-            <p className="text-gray-600 mb-6">
-              Archivo instalable directo. No requiere Play Store ni navegador.
+            <p className="text-brand-muted text-sm mb-6">
+              Archivo instalable directo. No requiere Play Store ni Chrome.
+              Ideal si prefieres instalación nativa.
             </p>
 
-            {apkUrl ? (
-              <>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-green-700 font-semibold mb-3">
-                    APK disponible para descargar
-                  </p>
-                  <a
-                    href={apkUrl}
-                    download
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                  >
-                    <Download className="w-4 h-4" />
-                    Descargar APK
-                  </a>
-                </div>
-              </>
-            ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-amber-700">
-                  El APK estará disponible próximamente. Por ahora, usa la opción PWA.
+            <div className="bg-brand-bg rounded-xl p-4 mb-6 flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-brand-charcoal">APK disponible</p>
+                <p className="text-xs text-brand-muted mt-0.5">
+                  Versión 1.0 · Android 6.0+ · arm64 &amp; arm32
                 </p>
               </div>
-            )}
+            </div>
 
-            <h3 className="font-bold text-lg mb-4">Pasos de instalación:</h3>
-            <ol className="space-y-3 text-sm">
-              <li className="flex gap-3">
-                <span className="font-bold text-green-600 min-w-fit">1.</span>
-                <span>Descarga el archivo APK</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-green-600 min-w-fit">2.</span>
-                <span>Abre Archivos / Descargas</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-green-600 min-w-fit">3.</span>
-                <span>Busca el archivo y toca para instalar</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-green-600 min-w-fit">4.</span>
-                <span>Confirma los permisos solicitados</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="font-bold text-green-600 min-w-fit">5.</span>
-                <span>¡Listo! La app está instalada</span>
-              </li>
+            <h3 className="font-semibold text-brand-charcoal mb-3">Pasos de instalación:</h3>
+            <ol className="space-y-2 text-sm text-brand-muted mb-8">
+              {[
+                'Descarga el archivo APK con el botón de abajo',
+                'Ve a Ajustes → Seguridad → Fuentes desconocidas',
+                'Activa la opción para tu navegador',
+                'Abre el APK descargado desde Notificaciones o Archivos',
+                '¡Instala y disfruta!',
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="font-bold text-brand-charcoal min-w-[1.2rem]">{i + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
             </ol>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 flex gap-2 text-xs text-amber-700">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Android mostrará una advertencia al instalar desde fuera de Play Store.
+                El APK de Velunisa es seguro y verificado.
+              </span>
+            </div>
+
+            <a
+              href={APK_URL}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-pill
+                         bg-brand-charcoal text-brand-cream font-semibold
+                         hover:bg-brand-charcoal/90 transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              Descargar APK
+            </a>
           </div>
         </div>
+      </section>
 
-        {/* Features */}
-        <div className="mt-16 bg-gray-50 rounded-xl p-8">
-          <h2 className="text-2xl font-bold mb-8 text-center">Características</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <Smartphone className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="font-bold mb-2">Acceso Total</h3>
-              <p className="text-sm text-gray-600">
-                Manage tus compras, pedidos y cuenta desde tu celular
-              </p>
-            </div>
-            <div className="text-center">
-              <Globe className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="font-bold mb-2">Funciona Offline</h3>
-              <p className="text-sm text-gray-600">
-                La app funciona sin conexión para acceso rápido
-              </p>
-            </div>
-            <div className="text-center">
-              <Apple className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="font-bold mb-2">Sin Play Store</h3>
-              <p className="text-sm text-gray-600">
-                Instala directamente sin depender de tiendas de apps
-              </p>
-            </div>
+      {/* ── Características ───────────────────────────────────────────── */}
+      <section className="bg-white border-y border-brand-tan/20 py-16">
+        <div className="container-velunisa">
+          <h2 className="font-serif text-2xl text-brand-charcoal text-center mb-12">
+            Todo lo que necesitas, en tu bolsillo
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { icon: '🛍️', title: 'Catálogo completo',      desc: 'Todos los wax melts con fotos y variantes' },
+              { icon: '📦', title: 'Seguimiento de pedidos', desc: 'Estado en tiempo real de tus compras' },
+              { icon: '🤖', title: 'Chat con Luna',          desc: 'Asistente IA para recomendaciones' },
+              { icon: '🔔', title: 'Notificaciones push',    desc: 'Alertas de estado de tu pedido' },
+            ].map(f => (
+              <div key={f.title}>
+                <div className="text-4xl mb-3">{f.icon}</div>
+                <h3 className="font-semibold text-brand-charcoal text-sm mb-1">{f.title}</h3>
+                <p className="text-xs text-brand-muted">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Support */}
-        <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">¿Necesitas ayuda?</h2>
-          <p className="text-gray-600 mb-6">
-            Si tienes problemas instalando la app, contacta con nosotros
-          </p>
+      {/* ── Soporte ───────────────────────────────────────────────────── */}
+      <section className="container-velunisa py-16 text-center">
+        <h2 className="font-serif text-2xl text-brand-charcoal mb-4">
+          ¿Problemas instalando?
+        </h2>
+        <p className="text-brand-muted mb-6 max-w-md mx-auto">
+          Escríbenos por WhatsApp o usa el formulario de contacto y te ayudamos
+          en minutos.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="https://wa.me/593999999999"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-pill
+                       bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors"
+          >
+            WhatsApp
+          </a>
           <Link
             href="/contacto"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-pill
+                       border-2 border-brand-charcoal text-brand-charcoal font-semibold
+                       hover:bg-brand-charcoal hover:text-brand-cream transition-colors"
           >
-            Contactar Soporte
+            Formulario de contacto
           </Link>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
